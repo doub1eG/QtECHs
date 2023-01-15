@@ -24,7 +24,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="btn_clear">
     <property name="geometry">
      <rect>
       <x>560</x>
@@ -37,7 +37,7 @@
      <string>Clear</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="lbl_baudRate">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -50,7 +50,7 @@
      <string>Baud Rate</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_6">
+   <widget class="QComboBox" name="cmbBox_flowControl">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -60,7 +60,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="lbl_port">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -73,7 +73,7 @@
      <string>Port</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_6">
+   <widget class="QLabel" name="lbl_flowControl">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -86,7 +86,7 @@
      <string>Flow Control</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_5">
+   <widget class="QLabel" name="lbl_parity">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -99,7 +99,7 @@
      <string>Parity</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_3">
+   <widget class="QLabel" name="lbl_dataBits">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -112,7 +112,7 @@
      <string>Data Bits</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_4">
+   <widget class="QLabel" name="lbl_stopBits">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -125,7 +125,7 @@
      <string>Stop Bits</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_3">
+   <widget class="QComboBox" name="cmbBox_dataBits">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -135,17 +135,17 @@
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_5">
+   <widget class="QComboBox" name="cmbBox_parity">
     <property name="geometry">
      <rect>
       <x>110</x>
       <y>150</y>
-      <width>69</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_2">
+   <widget class="QComboBox" name="cmbBox_baudRate">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -155,7 +155,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox">
+   <widget class="QComboBox" name="cmbBox_port">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -165,7 +165,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_4">
+   <widget class="QComboBox" name="cmbBox_stopBits">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -175,7 +175,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_4">
+   <widget class="QPushButton" name="btn_refreshPorts">
     <property name="geometry">
      <rect>
       <x>200</x>
@@ -239,7 +239,7 @@
     <property name="title">
      <string>Set Duty Cycle</string>
     </property>
-    <widget class="QPushButton" name="pushButton_10">
+    <widget class="QPushButton" name="btn_sendDytyCycle">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -252,7 +252,7 @@
       <string>Send</string>
      </property>
     </widget>
-    <widget class="QSpinBox" name="spinBox">
+    <widget class="QSpinBox" name="spinBox_dutyCycle">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -268,17 +268,17 @@
       <number>180</number>
      </property>
     </widget>
-    <widget class="QLabel" name="labe_toPersent">
+    <widget class="QLabel" name="labe_DutyCycletoPersent">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>20</x>
        <y>50</y>
        <width>47</width>
        <height>13</height>
       </rect>
      </property>
      <property name="text">
-      <string>TextLabel</string>
+      <string>50%</string>
      </property>
     </widget>
    </widget>
@@ -294,7 +294,7 @@
     <property name="title">
      <string>Get Data</string>
     </property>
-    <widget class="QComboBox" name="comboBox_7">
+    <widget class="QComboBox" name="cmbBox_getData">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -304,7 +304,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_9">
+    <widget class="QPushButton" name="btn_getData">
      <property name="geometry">
       <rect>
        <x>110</x>
