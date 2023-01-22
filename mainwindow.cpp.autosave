@@ -83,7 +83,7 @@ void MainWindow::changeControllerState(QString receiveMsg)
 {
     QString command;
     command.append(receiveMsg[1]).append(receiveMsg[2]);
-    qInfo() << "command.toInt() -> " << command.toInt();
+//    qInfo() << "command.toInt() -> " << command.toInt();
     switch (command.toInt())
     {
         case 1:
@@ -119,7 +119,7 @@ void MainWindow::changeTransferData()
         QString message = ENABLE_DATA_TRANSFER;
         ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
         ui->textBrowser->append("C02:1 - разрешить передачу данных");
-        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
+//        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
         serialPort->write(message.toLocal8Bit());
         return;
     }
@@ -127,7 +127,7 @@ void MainWindow::changeTransferData()
     QString message = DISABLE_DEVICE;
     ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
     ui->textBrowser->append("C01:0 - отключить устройство от ПК");
-    qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
+//    qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
     serialPort->write(message.toLocal8Bit());
     state = Connect;
 }
@@ -202,7 +202,7 @@ void MainWindow::on_btn_connectToPC_clicked()
         QString message = ENABLE_DEVICE;
         ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
         ui->textBrowser->append("C01:1 - подключить устройство к ПК");
-        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
+//        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
         serialPort->write(message.toLocal8Bit());
         ui->btn_connectToPC->setText("DisconnectToPc");
         ui->btn_connectToPC->setEnabled(false);

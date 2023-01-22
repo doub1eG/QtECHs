@@ -16,11 +16,22 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    enum ControllerState
+    {
+        Disconnect,
+        Connect,
+        DataTransfer
+    };
+
 public slots:
     void receiveMessage();
 
 private slots:
     void init();
+
+    void changeControllerState(QString receiveMsg);
+
+    void changeTransferData();
 
     void on_btn_connect_clicked();
 
@@ -30,13 +41,14 @@ private slots:
 
     void on_btn_connectToPC_clicked();
 
+    void on_btn_getData_clicked();
+
 private:
     Ui::MainWindow *ui;
     QSerialPort * serialPort;
     QScopedPointer <QSerialPortInfo> sPortInfo;
 
-    bool m_flagStateFirst;
-    bool m_flagStateSecond;
-    bool m_flagStateThird;
+    QString buffer;
+    ControllerState state = Disconnect;
 };
 #endif // MAINWINDOW_H

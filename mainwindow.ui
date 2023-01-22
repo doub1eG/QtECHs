@@ -217,9 +217,9 @@
    <widget class="QPushButton" name="btn_connectToPC">
     <property name="geometry">
      <rect>
-      <x>140</x>
+      <x>130</x>
       <y>240</y>
-      <width>81</width>
+      <width>91</width>
       <height>23</height>
      </rect>
     </property>
