@@ -23,15 +23,29 @@ public:
         DataTransfer
     };
 
+    enum DataState
+    {
+        WithoutPloter,
+        CurrentAndVoltage,
+        OnlyVoltage
+    };
+
+signals:
+    void openCurrentPloter(bool state);
+
+    void openVoltagePloter(bool state);
+
 public slots:
     void receiveMessage();
 
 private slots:
     void init();
 
-    void changeControllerState(QString receiveMsg);
+    void changeControllerm_controllerState(QString receiveMsg);
 
     void changeTransferData();
+
+    void handleError(QSerialPort::SerialPortError error);
 
     void on_btn_connect_clicked();
 
@@ -43,12 +57,15 @@ private slots:
 
     void on_btn_getData_clicked();
 
+    void on_cmbBox_getData_activated(int index);
+
 private:
     Ui::MainWindow *ui;
     QSerialPort * serialPort;
     QScopedPointer <QSerialPortInfo> sPortInfo;
 
     QString buffer;
-    ControllerState state = Disconnect;
+    ControllerState controllerState = Disconnect;
+    DataState dataState = WithoutPloter;
 };
 #endif // MAINWINDOW_H

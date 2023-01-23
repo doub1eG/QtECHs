@@ -2,8 +2,8 @@
 #include "ui_mainwindow.h"
 #include "command.h"
 
+#include <QMessageBox>
 #include <QSerialPortInfo>
-#include <QDebug>
 #include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -30,7 +30,7 @@ void MainWindow::receiveMessage()
     ui->textBrowser->append(msg);
     qInfo() << "msg" << msg;
 
-    changeControllerState(msg);
+    changeControllerm_controllerState(msg);
 }
 
 void MainWindow::init()
@@ -77,32 +77,35 @@ void MainWindow::init()
     QStringList toGetData = {"U and I", "only U", "one time U,I", "one time I"};
     ui->cmbBox_getData->addItems(toGetData);
 
+    connect(serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
+//    QTimer
+
 }
 
-void MainWindow::changeControllerState(QString receiveMsg)
+void MainWindow::changeControllerm_controllerState(QString receiveMsg)
 {
     QString command;
     command.append(receiveMsg[1]).append(receiveMsg[2]);
-    qInfo() << "command.toInt() -> " << command.toInt();
+//    qInfo() << "command.toInt() -> " << command.toInt();
     switch (command.toInt())
     {
         case 1:
         if(receiveMsg[4] == '1')
         {
-            state = Connect;
+            controllerState = Connect;
             changeTransferData();
             break;
         }
         else if (receiveMsg[4] == '0')
         {
-            state = Disconnect;
+            controllerState = Disconnect;
             ui->btn_connectToPC->setEnabled(true);
             break;
         }
         case 2:
         if(receiveMsg[4] == '1')
         {
-            state = DataTransfer;
+            controllerState = DataTransfer;
             ui->btn_connectToPC->setEnabled(true);
             break;
         }
@@ -114,24 +117,31 @@ void MainWindow::changeControllerState(QString receiveMsg)
 
 void MainWindow::changeTransferData()
 {
-    if (state == ControllerState::Connect)
+    if (controllerState == ControllerState::Connect)
     {
-        QString message = ENABLE_DATA_TRANSFER;
         ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
         ui->textBrowser->append("C02:1 - разрешить передачу данных");
-        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
-        serialPort->write(message.toLocal8Bit());
+//        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
+        serialPort->write(QString(ENABLE_DATA_TRANSFER).toLocal8Bit());
         return;
     }
 
-    QString message = DISABLE_DEVICE;
     ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
     ui->textBrowser->append("C01:0 - отключить устройство от ПК");
-    qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
-    serialPort->write(message.toLocal8Bit());
-    state = Connect;
+//    qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
+    serialPort->write(QString(DISABLE_DEVICE).toLocal8Bit());
+    controllerState = Connect;
 }
 
+void MainWindow::handleError(QSerialPort::SerialPortError error)
+{
+    if (error == QSerialPort::ResourceError)
+    {
+        QMessageBox::critical(this, tr("Critical Error"), serialPort->errorString());
+        if(serialPort->isOpen())
+            serialPort->close();
+    }
+}
 
 void MainWindow::on_btn_connect_clicked()
 {
@@ -197,36 +207,77 @@ void MainWindow::on_btn_connectToPC_clicked()
     if(!serialPort->isOpen())
         return;
 
-    if(state == ControllerState::Disconnect)
+    if(controllerState == ControllerState::Disconnect)
     {
-        QString message = ENABLE_DEVICE;
         ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
         ui->textBrowser->append("C01:1 - подключить устройство к ПК");
-        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
-        serialPort->write(message.toLocal8Bit());
+//        qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
+        serialPort->write(QString(ENABLE_DEVICE).toLocal8Bit());
         ui->btn_connectToPC->setText("DisconnectToPc");
         ui->btn_connectToPC->setEnabled(false);
         return;
     }
     else
     {
-        QString message = DISABLE_DATA_TRANSFER;
         ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
         ui->textBrowser->append("C02:0 - - запретить передачу данных");
-        serialPort->write(message.toLocal8Bit());
+        serialPort->write(QString(DISABLE_DATA_TRANSFER).toLocal8Bit());
         ui->btn_connectToPC->setText("ConnectToPc");
         ui->btn_connectToPC->setEnabled(false);
         return;
     }
-
-    ui->statusbar->showMessage("Error ControllerState, go to step",3000);
 }
 
 
 void MainWindow::on_btn_getData_clicked()
 {
-//    switch (ui->cmbBox_getData->text)
-//    {
+    if(controllerState == DataTransfer && dataState == CurrentAndVoltage)
+    {
+        emit openVoltagePloter(true);
+        emit openCurrentPloter(true);
+        return;
+    }
 
-//    }
+    if(controllerState == DataTransfer && dataState == OnlyVoltage)
+    {
+        emit openVoltagePloter(true);
+        return;
+    }
+}
+
+void MainWindow::on_cmbBox_getData_activated(int index)
+{
+    qDebug() << "on_cmbBox_getData_activated -> " << index;
+    switch (index)
+    {
+        case(0): // open ploter cur and volt
+        dataState = CurrentAndVoltage;
+        if(serialPort->isOpen())
+            serialPort->write(QString(VOLTAGE_AND_CURRENT).toLocal8Bit());
+        break;
+
+        case(1):
+        emit openCurrentPloter(false);
+        if(serialPort->isOpen())
+            serialPort->write(QString(ONLY_VOLTAGE).toLocal8Bit());
+        dataState = OnlyVoltage;
+        break;
+
+        case(2):
+        dataState = WithoutPloter;
+        if(serialPort->isOpen())
+            serialPort->write(QString(VOLTAGE_AND_CURRENT).toLocal8Bit());
+        emit openCurrentPloter(false);
+        emit openVoltagePloter(false);
+        break;
+
+        case(3):
+        dataState = WithoutPloter;
+        if(serialPort->isOpen())
+            serialPort->write(QString(ONLY_VOLTAGE).toLocal8Bit());
+        emit openCurrentPloter(false);
+        emit openVoltagePloter(false);
+        break;
+    }
+
 }
