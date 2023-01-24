@@ -38,9 +38,6 @@ signals:
 
     void openVoltagePloter(bool state);
 
-public slots:
-    void receiveMessage();
-
 private slots:
     void init();
 
@@ -51,6 +48,8 @@ private slots:
     void handleError(QSerialPort::SerialPortError error);
 
     void convertToVal(QString receiveData);
+
+    void receiveMessage();
 
     void on_btn_connect_clicked();
 
