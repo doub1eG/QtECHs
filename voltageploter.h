@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QSerialPort>
+#include <QTimer>
 
 namespace Ui {
 class VoltagePloter;
@@ -16,13 +17,24 @@ public:
     explicit VoltagePloter(QSerialPort *ptrSeriaPort = nullptr,QWidget *parent = nullptr);
     ~VoltagePloter();
 
+public slots:
+    void init();
+
+    void openVoltagePloter(bool state);
+
 private slots:
-    void open(bool state);
+    void timerOfPointer();
+
+    void receiveMsgSerialPort();
+
+    int convertToVolt(QString receiveVolt);
 
 private:
     Ui::VoltagePloter *ui;
 
     QSerialPort * serialPort;
+    QTimer *timer;
+
 };
 
 #endif // VOLTAGEPLOTER_H

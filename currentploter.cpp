@@ -8,6 +8,7 @@ CurrentPloter::CurrentPloter(QSerialPort *ptrSerialPort,QWidget *parent) :
     serialPort(ptrSerialPort)
 {
     ui->setupUi(this);
+    this->setWindowTitle("Current Ploter");
 }
 
 CurrentPloter::~CurrentPloter()
@@ -15,7 +16,7 @@ CurrentPloter::~CurrentPloter()
     delete ui;
 }
 
-void CurrentPloter::open(bool state)
+void CurrentPloter::openCurrentPloter(bool state)
 {
     if(state && this->isHidden())
     {

@@ -16,8 +16,8 @@ public:
     explicit CurrentPloter(QSerialPort *ptrSeriaPort = nullptr,QWidget *parent = nullptr);
     ~CurrentPloter();
 
-private slots:
-    void open(bool state);
+public slots:
+    void openCurrentPloter(bool state);
 
 private:
     Ui::CurrentPloter *ui;

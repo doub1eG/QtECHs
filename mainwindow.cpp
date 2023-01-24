@@ -13,11 +13,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("Electric Charge Station");
     serialPort = new QSerialPort(this);
+    currentPloter = new CurrentPloter();
+    voltagePloter = new VoltagePloter();
     init();
 }
 
 MainWindow::~MainWindow()
 {
+    delete currentPloter;
+    delete voltagePloter;
     delete serialPort;
     delete ui;
 }
@@ -27,7 +31,7 @@ void MainWindow::receiveMessage()
     QByteArray dataBA = serialPort->readAll();
     QString msg(dataBA);
     ui->textBrowser->setTextColor(Qt::blue); // Receieved message's color is blue.
-    ui->textBrowser->append(msg);
+    ui->textBrowser->append("receive msg -> " + msg);
     qInfo() << "msg" << msg;
 
     changeControllerm_controllerState(msg);
@@ -78,6 +82,8 @@ void MainWindow::init()
     ui->cmbBox_getData->addItems(toGetData);
 
     connect(serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
+//    connect(this, &MainWindow::openCurrentPloter, currentPloter, &CurrentPloter::openCurrentPloter,Qt::QueuedConnection);
+//    connect(this, &MainWindow::openCurrentPloter, voltagePloter, &VoltagePloter::openVoltagePloter,Qt::QueuedConnection);
 //    QTimer
 
 }
@@ -112,6 +118,9 @@ void MainWindow::changeControllerm_controllerState(QString receiveMsg)
         else if (receiveMsg[4] == '0')
             changeTransferData();
         break;
+        case 4:
+        convertToVal(receiveMsg);
+        break;
     }
 }
 
@@ -141,6 +150,20 @@ void MainWindow::handleError(QSerialPort::SerialPortError error)
         if(serialPort->isOpen())
             serialPort->close();
     }
+}
+
+void MainWindow::convertToVal(QString receiveData)
+{
+    QString voltage;
+    voltage.append(receiveData[6]).append(receiveData[7]).append(receiveData[8]).append(receiveData[9]);
+    QString current;
+    current.append(receiveData[13]).append(receiveData[14]).append(receiveData[15]).append(receiveData[16]);
+
+    int convertVoltage = (voltage.toInt()*1000)/4093;
+    int convertCurrent = (current.toInt()*50)/4093;
+
+    qDebug() << convertVoltage << convertCurrent;
+    ui->textBrowser->append("Voltage -> " + QString::number(convertVoltage) + " ; " + "Current -> " + QString::number(convertCurrent));
 }
 
 void MainWindow::on_btn_connect_clicked()
@@ -233,14 +256,20 @@ void MainWindow::on_btn_getData_clicked()
 {
     if(controllerState == DataTransfer && dataState == CurrentAndVoltage)
     {
-        emit openVoltagePloter(true);
-        emit openCurrentPloter(true);
+        currentPloter->openCurrentPloter(true);
+        voltagePloter->openVoltagePloter(true);
         return;
     }
 
     if(controllerState == DataTransfer && dataState == OnlyVoltage)
     {
-        emit openVoltagePloter(true);
+        voltagePloter->openVoltagePloter(true);
+        return;
+    }
+
+    if(controllerState == DataTransfer && dataState == WithoutPloter)
+    {
+        serialPort->write(QString(READ_DATA).toLocal8Bit());
         return;
     }
 }
@@ -252,31 +281,34 @@ void MainWindow::on_cmbBox_getData_activated(int index)
     {
         case(0): // open ploter cur and volt
         dataState = CurrentAndVoltage;
+        currentPloter->openCurrentPloter(false);
+        voltagePloter->openVoltagePloter(false);
         if(serialPort->isOpen())
             serialPort->write(QString(VOLTAGE_AND_CURRENT).toLocal8Bit());
         break;
 
         case(1):
-        emit openCurrentPloter(false);
+        dataState = OnlyVoltage;
+        currentPloter->openCurrentPloter(false);
+        voltagePloter->openVoltagePloter(false);
         if(serialPort->isOpen())
             serialPort->write(QString(ONLY_VOLTAGE).toLocal8Bit());
-        dataState = OnlyVoltage;
         break;
 
         case(2):
         dataState = WithoutPloter;
         if(serialPort->isOpen())
             serialPort->write(QString(VOLTAGE_AND_CURRENT).toLocal8Bit());
-        emit openCurrentPloter(false);
-        emit openVoltagePloter(false);
+        currentPloter->openCurrentPloter(false);
+        voltagePloter->openVoltagePloter(false);
         break;
 
         case(3):
         dataState = WithoutPloter;
         if(serialPort->isOpen())
             serialPort->write(QString(ONLY_VOLTAGE).toLocal8Bit());
-        emit openCurrentPloter(false);
-        emit openVoltagePloter(false);
+        currentPloter->openCurrentPloter(false);
+        voltagePloter->openVoltagePloter(false);
         break;
     }
 

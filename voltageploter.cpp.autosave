@@ -29,7 +29,7 @@ void VoltagePloter::init()
 
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &VoltagePloter::timerOfPointer);
-    timer->start();
+    timer->start(10);
 }
 
 void VoltagePloter::openVoltagePloter(bool state)
@@ -50,10 +50,23 @@ void VoltagePloter::openVoltagePloter(bool state)
 void VoltagePloter::timerOfPointer()
 {
     timer->stop();
-    serialPort->write(QString(READ_DATA)
+    serialPort->write(QString(READ_DATA).toLocal8Bit());
 }
 
 void VoltagePloter::receiveMsgSerialPort()
 {
+    QByteArray dataBA = serialPort->readAll();
+    QString msg(dataBA);
+    int point = convertToVolt(msg);
+}
 
+
+int VoltagePloter::convertToVolt(QString receiveVolt)
+{
+    QString voltage;
+    voltage.append(receiveVolt[6]).append(receiveVolt[7]).append(receiveVolt[8]).append(receiveVolt[9]);
+
+    int convertVoltage = (voltage.toInt()*1000)/4093;
+    
+    return convertVoltage;
 }
