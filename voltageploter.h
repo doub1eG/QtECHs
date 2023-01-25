@@ -17,15 +17,18 @@ public:
     explicit VoltagePloter(QSerialPort *ptrSeriaPort = nullptr,QWidget *parent = nullptr);
     ~VoltagePloter();
 
-public slots:
-    void init();
+signals:
+    void buildCurrentPloter(QString serialData);
 
+public slots:
     void openVoltagePloter(bool state);
 
-private slots:
-    void timerOfPointer();
-
     void receiveMsgSerialPort();
+
+private slots:
+    void init();
+
+    void timerOfPointer();
 
     int convertToVolt(QString receiveVolt);
 
@@ -35,6 +38,8 @@ private:
     QSerialPort * serialPort;
     QTimer *timer;
 
+    QVector<double> x,y;
+    double sec = 0;
 };
 
 #endif // VOLTAGEPLOTER_H

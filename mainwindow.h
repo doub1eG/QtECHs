@@ -6,6 +6,7 @@
 //#include <QSharedPointer>
 #include <currentploter.h>
 #include <voltageploter.h>
+#include <QCloseEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -17,7 +18,7 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
     enum ControllerState
     {
@@ -28,6 +29,7 @@ public:
 
     enum DataState
     {
+        SingleState,
         WithoutPloter,
         CurrentAndVoltage,
         OnlyVoltage
@@ -50,6 +52,8 @@ private slots:
     void convertToVal(QString receiveData);
 
     void receiveMessage();
+
+    void closeEvent(QCloseEvent *event) override;
 
     void on_btn_connect_clicked();
 

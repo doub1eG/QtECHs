@@ -13,16 +13,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("Electric Charge Station");
     serialPort = new QSerialPort(this);
-    currentPloter = new CurrentPloter();
-    voltagePloter = new VoltagePloter();
+    currentPloter = new CurrentPloter(serialPort);
+    voltagePloter = new VoltagePloter(serialPort);
     init();
 }
 
 MainWindow::~MainWindow()
 {
-    delete currentPloter;
-    delete voltagePloter;
     delete serialPort;
+    delete voltagePloter;
+    delete currentPloter;
     delete ui;
 }
 
@@ -35,6 +35,13 @@ void MainWindow::receiveMessage()
     qInfo() << "msg" << msg;
 
     changeControllerm_controllerState(msg);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    currentPloter->openCurrentPloter(false);
+    voltagePloter->openVoltagePloter(false);
+    event->accept();
 }
 
 void MainWindow::init()
@@ -192,6 +199,7 @@ void MainWindow::on_btn_connect_clicked()
         ui->statusbar->showMessage("Connenction enstablished",3000);
 
         connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+
     }
 }
 
@@ -256,6 +264,9 @@ void MainWindow::on_btn_getData_clicked()
 {
     if(controllerState == DataTransfer && dataState == CurrentAndVoltage)
     {
+        disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+        connect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+        connect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
         currentPloter->openCurrentPloter(true);
         voltagePloter->openVoltagePloter(true);
         return;
@@ -263,11 +274,24 @@ void MainWindow::on_btn_getData_clicked()
 
     if(controllerState == DataTransfer && dataState == OnlyVoltage)
     {
+        disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+        disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
+        connect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
         voltagePloter->openVoltagePloter(true);
         return;
     }
 
     if(controllerState == DataTransfer && dataState == WithoutPloter)
+    {
+        disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+        disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
+        connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+        serialPort->write(QString(READ_DATA).toLocal8Bit());
+        dataState = SingleState;
+        return;
+    }
+
+    if(controllerState == DataTransfer && dataState == SingleState)
     {
         serialPort->write(QString(READ_DATA).toLocal8Bit());
         return;
@@ -296,19 +320,26 @@ void MainWindow::on_cmbBox_getData_activated(int index)
         break;
 
         case(2):
-        dataState = WithoutPloter;
-        if(serialPort->isOpen())
-            serialPort->write(QString(VOLTAGE_AND_CURRENT).toLocal8Bit());
+        if(dataState == CurrentAndVoltage || dataState == OnlyVoltage)
+            dataState = WithoutPloter;
+        else
+            dataState = SingleState;
         currentPloter->openCurrentPloter(false);
         voltagePloter->openVoltagePloter(false);
+        if(serialPort->isOpen())
+            serialPort->write(QString(VOLTAGE_AND_CURRENT).toLocal8Bit());
         break;
 
         case(3):
+        if(dataState == CurrentAndVoltage || dataState == OnlyVoltage)
+            dataState = WithoutPloter;
+        else
+            dataState = SingleState;
         dataState = WithoutPloter;
-        if(serialPort->isOpen())
-            serialPort->write(QString(ONLY_VOLTAGE).toLocal8Bit());
         currentPloter->openCurrentPloter(false);
         voltagePloter->openVoltagePloter(false);
+        if(serialPort->isOpen())
+            serialPort->write(QString(ONLY_VOLTAGE).toLocal8Bit());
         break;
     }
 

@@ -19,10 +19,20 @@ public:
 public slots:
     void openCurrentPloter(bool state);
 
+    void receiveMsgVoltagePloter(QString serialData);
+
+private slots:
+    void init();
+
+    int convertToCurr(QString receiveVolt);
+
 private:
     Ui::CurrentPloter *ui;
 
     QSerialPort * serialPort;
+
+    QVector<double> x,y;
+    double sec = 0;
 };
 
 #endif // CURRENTPLOTER_H
