@@ -67,6 +67,12 @@ private slots:
 
     void on_cmbBox_getData_activated(int index);
 
+    void on_btn_sendDytyCycle_clicked();
+
+    void on_spinBox_dutyCycle_valueChanged(int arg1);
+
+    void on_btn_clear_clicked();
+
 private:
     Ui::MainWindow *ui;
     QSerialPort * serialPort;

@@ -262,13 +262,13 @@
       </rect>
      </property>
      <property name="maximum">
-      <number>180</number>
+      <number>179</number>
      </property>
      <property name="value">
-      <number>180</number>
+      <number>179</number>
      </property>
     </widget>
-    <widget class="QLabel" name="labe_DutyCycletoPersent">
+    <widget class="QLabel" name="lbl_DutyCycletoPersent">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -278,7 +278,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>50%</string>
+      <string>50.12%</string>
      </property>
     </widget>
    </widget>
