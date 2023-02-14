@@ -375,7 +375,7 @@ void MainWindow::on_btn_sendDytyCycle_clicked()
 
 void MainWindow::on_spinBox_dutyCycle_valueChanged(int arg1)
 {
-    double prsnt = arg1 * 0.28;
+    int prsnt = arg1 * 0.28;
     ui->lbl_DutyCycletoPersent->setText(QString::number(prsnt) + "%");
 //    qDebug() << "prsnt" << prsnt;
 }
