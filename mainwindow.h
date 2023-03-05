@@ -29,6 +29,7 @@ public:
 
     enum DataState
     {
+        UnknownState,
         SingleState,
         WithoutPloter,
         CurrentAndVoltage,
@@ -43,7 +44,7 @@ signals:
 private slots:
     void init();
 
-    void changeControllerm_controllerState(QString receiveMsg);
+    void changeControllerState(QString receiveMsg);
 
     void changeTransferData();
 
@@ -80,8 +81,10 @@ private:
     VoltagePloter * voltagePloter;
     QScopedPointer <QSerialPortInfo> sPortInfo;
 
+    bool mainWinConnect;
+
     QString buffer;
     ControllerState controllerState = Disconnect;
-    DataState dataState = WithoutPloter;
+    DataState dataState = UnknownState;
 };
 #endif // MAINWINDOW_H

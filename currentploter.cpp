@@ -28,19 +28,24 @@ void CurrentPloter::openCurrentPloter(bool state)
 
     if(!state && this->isVisible())
     {
+        y.clear();
+        x.clear();
+        ui->widget->graph(0)->data().clear();
+        ui->widget->replot();
         this->hide();
         return;
     }
-    qDebug() << "already hidden or Visible";
+//    qDebug() << "already hidden or Visible";
 }
 
 void CurrentPloter::receiveMsgVoltagePloter(QString serialData)
 {
     QString msg = serialData;
+//    qDebug() << "currentploter-> " << msg;
     x.push_back(sec);
     y.push_back(double(convertToCurr(msg)));
-    ui->widget->graph(0)->addData(x,y);
-    ui->widget->rescaleAxes();
+    ui->widget->graph(0)->setData(x,y);
+    ui->widget->rescaleAxes(true);
     ui->widget->replot();
     ui->widget->update();
     sec++;

@@ -30,11 +30,12 @@ void MainWindow::receiveMessage()
 {
     QByteArray dataBA = serialPort->readAll();
     QString msg(dataBA);
+//    qInfo() << "msg" << msg;
+    msg.chop(2);
     ui->textBrowser->setTextColor(Qt::blue); // Receieved message's color is blue.
-    ui->textBrowser->append("receive msg -> " + msg);
-    qInfo() << "msg" << msg;
+    ui->textBrowser->append("Ответ от МК -> " + msg);
 
-    changeControllerm_controllerState(msg);
+    changeControllerState(msg);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -89,17 +90,13 @@ void MainWindow::init()
     ui->cmbBox_getData->addItems(toGetData);
 
     connect(serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
-//    connect(this, &MainWindow::openCurrentPloter, currentPloter, &CurrentPloter::openCurrentPloter,Qt::QueuedConnection);
-//    connect(this, &MainWindow::openCurrentPloter, voltagePloter, &VoltagePloter::openVoltagePloter,Qt::QueuedConnection);
-//    QTimer
-
 }
 
-void MainWindow::changeControllerm_controllerState(QString receiveMsg)
+void MainWindow::changeControllerState(QString receiveMsg)
 {
     QString command;
     command.append(receiveMsg[1]).append(receiveMsg[2]);
-//    qInfo() << "command.toInt() -> " << command.toInt();
+
     switch (command.toInt())
     {
         case 1:
@@ -124,7 +121,7 @@ void MainWindow::changeControllerm_controllerState(QString receiveMsg)
         }
         else if (receiveMsg[4] == '0')
             changeTransferData();
-        break;
+        break; 
         case 4:
         convertToVal(receiveMsg);
         break;
@@ -169,8 +166,8 @@ void MainWindow::convertToVal(QString receiveData)
     int convertVoltage = (voltage.toInt()*1000)/4093;
     int convertCurrent = (current.toInt()*50)/4093;
 
-    qDebug() << convertVoltage << convertCurrent;
-    ui->textBrowser->append("Voltage -> " + QString::number(convertVoltage) + " ; " + "Current -> " + QString::number(convertCurrent));
+//    qDebug() << convertVoltage << convertCurrent;
+    ui->textBrowser->append("Напряжение -> " + QString::number(convertVoltage) + " ; " + "Ток -> " + QString::number(convertCurrent));
 }
 
 void MainWindow::on_btn_connect_clicked()
@@ -198,6 +195,7 @@ void MainWindow::on_btn_connect_clicked()
 
         ui->statusbar->showMessage("Connenction enstablished",3000);
 
+        mainWinConnect = true;
         connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
 
     }
@@ -248,15 +246,12 @@ void MainWindow::on_btn_connectToPC_clicked()
         ui->btn_connectToPC->setEnabled(false);
         return;
     }
-    else
-    {
-        ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
-        ui->textBrowser->append("C02:0 - - запретить передачу данных");
-        serialPort->write(QString(DISABLE_DATA_TRANSFER).toLocal8Bit());
-        ui->btn_connectToPC->setText("ConnectToPc");
-        ui->btn_connectToPC->setEnabled(false);
-        return;
-    }
+
+    ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
+    ui->textBrowser->append("C02:0 - - запретить передачу данных");
+    serialPort->write(QString(DISABLE_DATA_TRANSFER).toLocal8Bit());
+    ui->btn_connectToPC->setText("ConnectToPc");
+    ui->btn_connectToPC->setEnabled(false);
 }
 
 
@@ -265,9 +260,18 @@ void MainWindow::on_btn_getData_clicked()
     ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
     if(controllerState == DataTransfer && dataState == CurrentAndVoltage)
     {
-        disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
-        connect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+        if(mainWinConnect)
+        {
+            disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+            connect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+            connect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
+
+            mainWinConnect = false;
+        }
+
+        disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
         connect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
+//        disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
         currentPloter->openCurrentPloter(true);
         voltagePloter->openVoltagePloter(true);
         return;
@@ -275,18 +279,30 @@ void MainWindow::on_btn_getData_clicked()
 
     if(controllerState == DataTransfer && dataState == OnlyVoltage)
     {
-        disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+        if(mainWinConnect)
+        {
+            disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+//            disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+            connect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+
+            mainWinConnect = false;
+        }
+
         disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
-        connect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+
         voltagePloter->openVoltagePloter(true);
         return;
     }
 
     if(controllerState == DataTransfer && dataState == WithoutPloter)
     {
-        disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
-        disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
-        connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+        if(!mainWinConnect)
+        {
+            disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
+            disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+            connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+            mainWinConnect = true;
+        }
         ui->textBrowser->append("C04:1 - запрос данных от МК");
         serialPort->write(QString(READ_DATA).toLocal8Bit());
         dataState = SingleState;
@@ -304,7 +320,7 @@ void MainWindow::on_btn_getData_clicked()
 void MainWindow::on_cmbBox_getData_activated(int index)
 {
     ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
-    qDebug() << "on_cmbBox_getData_activated -> " << index;
+//    qDebug() << "on_cmbBox_getData_activated -> " << index;
     switch (index)
     {
         case(0): // open ploter cur and volt
@@ -331,11 +347,13 @@ void MainWindow::on_cmbBox_getData_activated(int index)
 
         case(2):
         if(dataState == CurrentAndVoltage || dataState == OnlyVoltage)
+        {
+            currentPloter->openCurrentPloter(false);
+            voltagePloter->openVoltagePloter(false);
             dataState = WithoutPloter;
+        }
         else
             dataState = SingleState;
-        currentPloter->openCurrentPloter(false);
-        voltagePloter->openVoltagePloter(false);
         if(serialPort->isOpen())
         {
             ui->textBrowser->append("C03:V1;I1 - передавать значения измеренного напряжения (V), тока (I)");
@@ -345,12 +363,14 @@ void MainWindow::on_cmbBox_getData_activated(int index)
 
         case(3):
         if(dataState == CurrentAndVoltage || dataState == OnlyVoltage)
+        {
             dataState = WithoutPloter;
+            currentPloter->openCurrentPloter(false);
+            voltagePloter->openVoltagePloter(false);
+        }
         else
             dataState = SingleState;
         dataState = WithoutPloter;
-        currentPloter->openCurrentPloter(false);
-        voltagePloter->openVoltagePloter(false);
         if(serialPort->isOpen())
         {
             ui->textBrowser->append("C03:V1;I0 - передавать значения измеренного напряжения (V)");
@@ -358,14 +378,21 @@ void MainWindow::on_cmbBox_getData_activated(int index)
         }
         break;
     }
-
+    ui->btn_getData->setEnabled(true);
 }
 
 void MainWindow::on_btn_sendDytyCycle_clicked()
 {
     ui->textBrowser->setTextColor(Qt::darkGreen); // Color of message to send is green.
-    QString dutyCycle = "C05:" + ui->spinBox_dutyCycle->text() +"\r" ;
-//    qDebug() << "dutyCycle" << dutyCycle;
+    QString dutyCycle;
+    if(ui->spinBox_dutyCycle->text().toInt() < 10)
+        dutyCycle = "C05:00" + ui->spinBox_dutyCycle->text() +"\r" ;
+    else if(ui->spinBox_dutyCycle->text().toInt() < 100)
+        dutyCycle = "C05:0" + ui->spinBox_dutyCycle->text() +"\r" ;
+    else
+        dutyCycle = "C05:" + ui->spinBox_dutyCycle->text() +"\r" ;
+
+//    qDebug() << "dutyCycle " << dutyCycle;
     if(serialPort->isOpen())
     {
         ui->textBrowser->append("C05:" + ui->spinBox_dutyCycle->text() + " - отправить коэффициент заполнения ШИМ");

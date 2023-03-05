@@ -42,8 +42,6 @@ void VoltagePloter::openVoltagePloter(bool state)
 {
     if(state && this->isHidden())
     {
-        y.clear();
-        x.clear();
         timer->start(1000);
         this->show();
         return;
@@ -51,6 +49,10 @@ void VoltagePloter::openVoltagePloter(bool state)
 
     if(!state && this->isVisible())
     {
+        y.clear();
+        x.clear();
+        ui->widget->graph(0)->data().clear();
+        ui->widget->replot();
         timer->stop();
         this->hide();
         return;
@@ -66,10 +68,12 @@ void VoltagePloter::receiveMsgSerialPort()
 {
     QByteArray dataBA = serialPort->readAll();
     QString msg(dataBA);
+    msg.chop(2);
+//    qDebug() << "voltageploter-> " << msg;
     emit buildCurrentPloter(msg);
     x.push_back(sec);
     y.push_back(double(convertToVolt(msg)));
-    ui->widget->graph(0)->addData(x,y);
+    ui->widget->graph(0)->setData(x,y);
     ui->widget->rescaleAxes();
     ui->widget->replot();
     ui->widget->update();
