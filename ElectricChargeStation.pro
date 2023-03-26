@@ -13,6 +13,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     qcustomplot.cpp \
+    serialportmanager.cpp \
     voltageploter.cpp
 
 HEADERS += \
@@ -20,6 +21,7 @@ HEADERS += \
     currentploter.h \
     mainwindow.h \
     qcustomplot.h \
+    serialportmanager.h \
     voltageploter.h
 
 FORMS += \

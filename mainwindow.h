@@ -3,10 +3,11 @@
 
 #include <QMainWindow>
 #include <QSerialPort>
-//#include <QSharedPointer>
 #include <currentploter.h>
 #include <voltageploter.h>
 #include <QCloseEvent>
+
+#include "serialportmanager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -40,6 +41,8 @@ signals:
     void openCurrentPloter(bool state);
 
     void openVoltagePloter(bool state);
+
+    void sendRequest(QString request);
 
 private slots:
     void init();
@@ -76,9 +79,10 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QSerialPort * serialPort;
-    CurrentPloter * currentPloter;
-    VoltagePloter * voltagePloter;
+//    QSerialPort * serialPort;
+    SerialPortManager * m_portManager;
+    CurrentPloter * m_currentPloter;
+    VoltagePloter * m_voltagePloter;
     QScopedPointer <QSerialPortInfo> sPortInfo;
 
     bool mainWinConnect;

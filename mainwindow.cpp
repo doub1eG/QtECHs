@@ -12,17 +12,16 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle("Electric Charge Station");
-    serialPort = new QSerialPort(this);
-    currentPloter = new CurrentPloter(serialPort);
-    voltagePloter = new VoltagePloter(serialPort);
+    m_portManager = new SerialPortManager(this);
+    m_currentPloter = new CurrentPloter();
+    m_voltagePloter = new VoltagePloter();
     init();
 }
 
 MainWindow::~MainWindow()
 {
-    delete serialPort;
-    delete voltagePloter;
-    delete currentPloter;
+    delete m_voltagePloter;
+    delete m_currentPloter;
     delete ui;
 }
 
@@ -40,8 +39,8 @@ void MainWindow::receiveMessage()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    currentPloter->openCurrentPloter(false);
-    voltagePloter->openVoltagePloter(false);
+    m_currentPloter->openCurrentPloter(false);
+    m_voltagePloter->openVoltagePloter(false);
     event->accept();
 }
 
@@ -89,7 +88,7 @@ void MainWindow::init()
     QStringList toGetData = {"U and I", "only U", "one time U,I", "one time I"};
     ui->cmbBox_getData->addItems(toGetData);
 
-    connect(serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
+    connect(m_portManager, &SerialPortManager::resourceError, this, &MainWindow::handleError);
 }
 
 void MainWindow::changeControllerState(QString receiveMsg)
