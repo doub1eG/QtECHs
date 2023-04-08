@@ -12,9 +12,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle("Electric Charge Station");
+    setFixedSize(this->size());
     serialPort = new QSerialPort(this);
-    currentPloter = new CurrentPloter(serialPort);
-    voltagePloter = new VoltagePloter(serialPort);
+    currentPloter = new CurrentPloter(serialPort, this);
+    voltagePloter = new VoltagePloter(serialPort, this);
     init();
 }
 
@@ -86,7 +87,7 @@ void MainWindow::init()
     ui->cmbBox_flowControl->addItems(flowControl);
 
     //add select to get data
-    QStringList toGetData = {"U and I", "only U", "one time U,I", "one time I"};
+    QStringList toGetData = {"U and I", "only U", "one time U,I", "one time U"};
     ui->cmbBox_getData->addItems(toGetData);
 
     connect(serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
@@ -109,7 +110,8 @@ void MainWindow::changeControllerState(QString receiveMsg)
         else if (receiveMsg[4] == '0')
         {
             controllerState = Disconnect;
-            ui->btn_connectToPC->setEnabled(true);
+            ui->btn_connectToPC->setEnabled(false);
+            ui->statusbar->showMessage("Try to disconnect!",10000);
             break;
         }
         case 2:
@@ -143,7 +145,7 @@ void MainWindow::changeTransferData()
     ui->textBrowser->append("C01:0 - отключить устройство от ПК");
 //    qInfo() << "msg -> " << message.toLocal8Bit() << message.toUtf8();
     serialPort->write(QString(DISABLE_DEVICE).toLocal8Bit());
-    controllerState = Connect;
+//    controllerState = Disconnect;
 }
 
 void MainWindow::handleError(QSerialPort::SerialPortError error)
@@ -167,11 +169,14 @@ void MainWindow::convertToVal(QString receiveData)
     int convertCurrent = (current.toInt()*50)/4093;
 
 //    qDebug() << convertVoltage << convertCurrent;
-    ui->textBrowser->append("Напряжение -> " + QString::number(convertVoltage) + " ; " + "Ток -> " + QString::number(convertCurrent));
+    ui->textBrowser->append("Напряжение -> " + QString::number(convertVoltage) + " B; " + "Ток -> " + QString::number(convertCurrent) + " A");
 }
 
 void MainWindow::on_btn_connect_clicked()
 {
+    if(serialPort->isOpen())
+        return;
+
     serialPort->setPortName(ui->cmbBox_port->currentText());
     serialPort->open(QIODevice::ReadWrite);
 
@@ -218,14 +223,20 @@ void MainWindow::on_btn_refreshPorts_clicked()
 
 void MainWindow::on_btn_disconnect_clicked()
 {
+    if(!serialPort->isOpen())
+        return;
+
     if(serialPort->isOpen())
+    {
+        disconnect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
         serialPort->close();
+    }
 
     ui->statusbar->showMessage("Disconnected",3000);
     if(!ui->btn_connectToPC->isEnabled())
     {
         ui->btn_connectToPC->setEnabled(true);
-        ui->statusbar->showMessage("Reload Controller!",3000);
+        ui->statusbar->showMessage("You can reconnect to Controller!",3000);
     }
 }
 
@@ -235,6 +246,22 @@ void MainWindow::on_btn_connectToPC_clicked()
 
     if(!serialPort->isOpen())
         return;
+
+    if(currentPloter->isVisible())
+    {
+        disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+        disconnect(voltagePloter, &VoltagePloter::buildCurrentPloter, currentPloter, &CurrentPloter::receiveMsgVoltagePloter);
+        voltagePloter->openVoltagePloter(false);
+        currentPloter->openCurrentPloter(false);
+        connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+    }
+
+    if(voltagePloter->isVisible())
+    {
+        disconnect(serialPort,&QSerialPort::readyRead, voltagePloter, &VoltagePloter::receiveMsgSerialPort);
+        voltagePloter->openVoltagePloter(false);
+        connect(serialPort,&QSerialPort::readyRead,this, &MainWindow::receiveMessage);
+    }
 
     if(controllerState == ControllerState::Disconnect)
     {

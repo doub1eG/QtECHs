@@ -36,11 +36,6 @@ public:
         OnlyVoltage
     };
 
-signals:
-    void openCurrentPloter(bool state);
-
-    void openVoltagePloter(bool state);
-
 private slots:
     void init();
 
