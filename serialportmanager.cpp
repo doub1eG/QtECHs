@@ -1,11 +1,10 @@
 #include "serialportmanager.h"
 
-#include <QMessageBox>
+//#include <QMessageBox>
 
 SerialPortManager::SerialPortManager(QObject *parent)
     : QObject{parent}
-    , m_controllerState(SerialPortManager::Disconnect)
-    , m_dataState(SerialPortManager::UnknownState)
+    , m_controllerState(UnknownState)
 {
 
 }
@@ -23,14 +22,24 @@ void SerialPortManager::receiveSerialMsg()
     changeControllerState(msg);
 }
 
+void SerialPortManager::handleError(QSerialPort::SerialPortError error)
+{
+    if (error == QSerialPort::ResourceError)
+    {
+        emit resourceError(m_serialPort->errorString());
+        if(m_serialPort->isOpen())
+            m_serialPort->close();
+    }
+}
+
 void SerialPortManager::init()
 {
     m_serialPort = new QSerialPort(this);
-
     connect(m_serialPort, &QSerialPort::readyRead, this, &SerialPortManager::receiveSerialMsg);
+    connect(m_serialPort, &QSerialPort::errorOccurred, this, &SerialPortManager::handleError);
 }
 
-void SerialPortManager::changeControllerState(QString receiveMsg)
+void SerialPortManager::changeControllerState(const QString &receiveMsg)
 {
     QString command;
     command.append(receiveMsg[1]).append(receiveMsg[2]);
@@ -64,13 +73,8 @@ void SerialPortManager::changeControllerState(QString receiveMsg)
     }
 }
 
-void SerialPortManager::handleError(QSerialPort::SerialPortError error)
+void SerialPortManager::handlerCommand(const QString &receiveMsg)
 {
-    if (error == QSerialPort::ResourceError)
-    {
-        emit resourceError();
-//        QMessageBox::critical(this, tr("Critical Error"), m_serialPort->errorString());
-        if(m_serialPort->isOpen())
-            m_serialPort->close();
-    }
+
 }
+

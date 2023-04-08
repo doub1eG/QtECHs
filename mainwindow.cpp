@@ -25,16 +25,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::receiveMessage()
+void MainWindow::retranslatingMsg(QString msg)
 {
-    QByteArray dataBA = serialPort->readAll();
-    QString msg(dataBA);
-//    qInfo() << "msg" << msg;
-    msg.chop(2);
     ui->textBrowser->setTextColor(Qt::blue); // Receieved message's color is blue.
     ui->textBrowser->append("Ответ от МК -> " + msg);
-
-    changeControllerState(msg);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -46,10 +40,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::init()
 {
-    sPortInfo.reset(new QSerialPortInfo);
+    QSerialPortInfo sPortInfo;
 
     //add ports to comboBox
-    QList <QSerialPortInfo> ports = sPortInfo->availablePorts();
+    QList <QSerialPortInfo> ports = sPortInfo.availablePorts();
     QStringList stringPorts;
     for(size_t i = 0 ; i < ports.size() ; i++)
         stringPorts.append(ports.at(i).portName());
@@ -57,7 +51,7 @@ void MainWindow::init()
     ui->cmbBox_port->addItems(stringPorts);
 
     //add baudRates to comboBox
-    QList <qint32> baudRates = sPortInfo->standardBaudRates();
+    QList <qint32> baudRates = sPortInfo.standardBaudRates();
     QStringList stringBaudRates;
     for(size_t i = 6; i < (baudRates.size() - 2); i++)
     {
@@ -88,7 +82,8 @@ void MainWindow::init()
     QStringList toGetData = {"U and I", "only U", "one time U,I", "one time I"};
     ui->cmbBox_getData->addItems(toGetData);
 
-    connect(m_portManager, &SerialPortManager::resourceError, this, &MainWindow::handleError);
+    connect(m_portManager, &SerialPortManager::resourceError, this, &MainWindow::handleError, Qt::QueuedConnection);
+    connect(m_portManager, &SerialPortManager::receiveMsg, this, &MainWindow::retranslatingMsg, Qt::QueuedConnection);
 }
 
 void MainWindow::changeControllerState(QString receiveMsg)
@@ -145,14 +140,9 @@ void MainWindow::changeTransferData()
     controllerState = Connect;
 }
 
-void MainWindow::handleError(QSerialPort::SerialPortError error)
+void MainWindow::handleError(QString error)
 {
-    if (error == QSerialPort::ResourceError)
-    {
-        QMessageBox::critical(this, tr("Critical Error"), serialPort->errorString());
-        if(serialPort->isOpen())
-            serialPort->close();
-    }
+    QMessageBox::critical(this, tr("Critical Error"), error);
 }
 
 void MainWindow::convertToVal(QString receiveData)
@@ -203,10 +193,10 @@ void MainWindow::on_btn_connect_clicked()
 
 void MainWindow::on_btn_refreshPorts_clicked()
 {
-    sPortInfo.reset(new QSerialPortInfo);
+    QSerialPortInfo sPortInfo;
 
     ui->cmbBox_port->clear();
-    QList <QSerialPortInfo> ports = sPortInfo.data()->availablePorts();
+    QList <QSerialPortInfo> ports = sPortInfo.availablePorts();
     QStringList stringPorts;
     for(size_t i = 0 ; i < ports.size() ; i++)
         stringPorts.append(ports.at(i).portName());

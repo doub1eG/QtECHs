@@ -37,6 +37,9 @@ public:
         OnlyVoltage
     };
 
+public slots:
+    void retranslatingMsg(const QString &msg);
+
 signals:
     void openCurrentPloter(bool state);
 
@@ -51,11 +54,9 @@ private slots:
 
     void changeTransferData();
 
-    void handleError(QSerialPort::SerialPortError error);
+    void handleError(QString error);
 
     void convertToVal(QString receiveData);
-
-    void receiveMessage();
 
     void closeEvent(QCloseEvent *event) override;
 
@@ -83,7 +84,6 @@ private:
     SerialPortManager * m_portManager;
     CurrentPloter * m_currentPloter;
     VoltagePloter * m_voltagePloter;
-    QScopedPointer <QSerialPortInfo> sPortInfo;
 
     bool mainWinConnect;
 
